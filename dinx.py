@@ -3,7 +3,8 @@ class dinx():
     def __init__(self, comp):
         
         assert isinstance(comp, dict), 'Please input a dictionary'
-        for y in comp.values():
+        for x,y in comp.items():
+            assert isinstance(x, str), f'Invalid key: {x}. Please input a string, not {type(x).__name__}'
             assert isinstance(y, (list, tuple)), 'Please input lists or tuples'
         
         self._comp = comp
@@ -124,7 +125,11 @@ class dinx():
     def keys(self):
         
         return list(self._comp.keys())
-    
+                            
+    def values(self):
+        
+        return self._getall()
+                               
     def struct(self):
         
         return self._comp
