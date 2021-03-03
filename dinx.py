@@ -42,8 +42,6 @@ class dinx():
         
         else:
             raise TypeError(f"{cls.__name__} indices must be integers, slices or strings")
-        
-        return self._comp[ind]
     
     def __missing__(self, ind):
     
