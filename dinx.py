@@ -8,7 +8,7 @@ class dinx():
             assert isinstance(y, (list, tuple)), 'Please input lists or tuples'
         
         self._comp = comp
-        self._comp_map = [(x,y1) for x,y in self._comp.items() for y1 in y]
+        self._get_comp_map()
     
     def __repr__(self):
         
@@ -27,29 +27,36 @@ class dinx():
                 return cls({ind:self._comp[ind]})
             else:
                 raise KeyError(f'No such index: {ind}')
-                
-        elif isinstance(ind, (list, tuple, set)):
-            if all([x in self._comp for x in ind]):
-                return cls({x:self._comp[x] for x in ind})
-            else:
-                raise KeyError(f"The following indices not found: {','.join(filter(lambda x: x not in ind,self._comp))}")
-                
+     
         elif isinstance(ind, int): 
             return cls(self._to_dict([self._comp_map[ind]]))
         
         elif isinstance(ind, slice):
             return cls(self._to_dict(self._comp_map[ind]))
-        
+                
+        elif isinstance(ind, (list, tuple, set)):
+            _temp = cls({})
+            for x in ind:
+                if isinstance(x, str):
+                    if x in self._comp:
+                        _temp += cls({x:self._comp[x]})
+                    else:
+                        raise KeyError(f'No such index: {x}')
+                        
+                elif isinstance(x, int): 
+                    _temp += cls(self._to_dict([self._comp_map[x]]))
+                
+                else:
+                    raise TypeError(f"{cls.__name__} list indices must be integers or strings")
+            
+            return _temp
+     
         else:
             raise TypeError(f"{cls.__name__} indices must be integers, slices or strings")
     
-    def __missing__(self, ind):
-    
-        return None
-    
     def __add__(self, other):
         
-        assert isinstance(other._comp, dict), 'Please input a dinx'
+        assert isinstance(other, type(self)), 'Please input a dinx'
         _temp = type(self)({x:y[:] for x,y in self._comp.items()})
         _temp += other
 
@@ -61,15 +68,20 @@ class dinx():
     
     def __iadd__(self, other):
         
-        assert isinstance(other._comp, dict), 'Please input a dinx'
+        assert isinstance(other, type(self)), 'Please input a dinx'
         
-        for x,y in filter(lambda x: isinstance(x[1], list), other._comp.items()):
+        for x,y in other._comp.items():
             
-            if x in self._comp:
+            if isinstance(y, tuple) or (x in self._comp and isinstance(self._comp[x], tuple)):
+                pass
+            
+            elif x in self._comp:
                 self._comp[x] += y
             
             else:
                 self._comp[x] = y
+        
+        self._get_comp_map()
         
         return self
     
@@ -80,7 +92,7 @@ class dinx():
         if other._comp == {}:
             return self._getall()
         else:
-            return self.__add__(self, other)
+            return self.__add__(other, self)
     
     def __eq__(self, other):
         
@@ -97,8 +109,8 @@ class dinx():
     
     def _getall(self):
         
-        return self._sum_lists(map(list, self._comp.values()))
-
+        return [x[1] for x in self._comp_map] 
+        
     def _to_dict(self, l):
 
         d_temp = {}
@@ -111,6 +123,10 @@ class dinx():
 
         return d_temp
     
+    def _get_comp_map(self):
+        
+        self._comp_map = [(x,y1) for x,y in self._comp.items() for y1 in y]
+    
     def update(self, updates):
         
         assert isinstance(updates, dict), 'Please input a dictionary'
@@ -118,16 +134,16 @@ class dinx():
             assert isinstance(y, (list, tuple)), 'Please input lists or tuples'
         
         self._comp.update(updates)
-        self._comp_map = [(x,y1) for x,y in self._comp.items() for y1 in y]
+        self._get_comp_map()
     
     def keys(self):
         
         return list(self._comp.keys())
-                            
+    
     def values(self):
         
         return self._getall()
-                               
+    
     def struct(self):
         
         return self._comp
@@ -135,3 +151,17 @@ class dinx():
     def count(self, item):
         
         return self._getall().count(item)
+    
+    def sort(self, key = None, inplace = False, reverse = False):
+        
+        sort_func = lambda x: x[1]
+        if key:
+            assert type(lambda x: x).__name__ == 'function', 'Please input a function'
+            sort_func = lambda x: key(x[1])
+        
+        if inplace:
+            self._comp_map.sort(key = sort_func, reverse = reverse)
+        else:
+            _temp = type(self)(self._comp)
+            _temp._comp_map.sort(key = sort_func, reverse = reverse)
+            return _temp
