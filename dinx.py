@@ -34,23 +34,6 @@ class dinx():
         elif isinstance(ind, slice):
             return cls(self._to_dict(self._comp_map[ind]))
                 
-        elif isinstance(ind, (list, tuple, set)):
-            _temp = cls({})
-            for x in ind:
-                if isinstance(x, str):
-                    if x in self._comp:
-                        _temp += cls({x:self._comp[x]})
-                    else:
-                        raise KeyError(f'No such index: {x}')
-                        
-                elif isinstance(x, int): 
-                    _temp += cls(self._to_dict([self._comp_map[x]]))
-                
-                else:
-                    raise TypeError(f"{cls.__name__} list indices must be integers or strings")
-            
-            return _temp
-     
         else:
             raise TypeError(f"{cls.__name__} indices must be integers, slices or strings")
     
