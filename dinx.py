@@ -139,7 +139,7 @@ class dinx():
         
         sort_func = lambda x: x[1]
         if key:
-            assert type(lambda x: x).__name__ == 'function', 'Please input a function'
+            assert type(key).__name__ == 'function', 'Please input a function'
             sort_func = lambda x: key(x[1])
         
         if inplace:
